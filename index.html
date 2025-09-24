@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Faizan Ahmad — Web • App • AI (Full)</title>
+<style>
+/* ---------- Theme (kept compact) ---------- */
+:root{
+  --bg1:#041028; --bg2:#071026;
+  --accent1:#00D4FF; --accent2:#7C4DFF; --accent3:#00FFA3;
+  --muted:rgba(230,240,255,0.78);
+  --card: rgba(255,255,255,0.03);
+  --glass-border: rgba(255,255,255,0.05);
+  --radius:12px; --container:1100px; --ease:cubic-bezier(.2,.9,.25,1);
+  --particle-count:60;
+}
+*{box-sizing:border-box} html,body{height:100%}
+body{
+  margin:0;padding:28px 18px;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+  background:linear-gradient(180deg,var(--bg1),var(--bg2)); color:#eaf6ff;
+  -webkit-font-smoothing:antialiased; display:flex; justify-content:center; align-items:flex-start; overflow-x:hidden;
+}
+.wrap{ width:100%; max-width:var(--container); position:relative; z-index:2; }
+
+/* canvas */
+canvas#bgCanvas{ position:fixed; inset:0; z-index:0; }
+
+/* Topbar */
+.topbar{ display:flex; justify-content:space-between; align-items:center; padding:12px 14px; border-radius:12px;
+  background:linear-gradient(90deg, rgba(124,77,255,0.06), rgba(0,212,255,0.04)); border:1px solid var(--glass-border); box-shadow:0 8px 30px rgba(2,6,23,0.55); margin-bottom:18px; }
+.brand{ display:flex; gap:12px; align-items:center }
+.logo{ width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent2),var(--accent1));display:grid;place-items:center;color:#021225;font-weight:800;box-shadow:0 10px 30px rgba(7,12,25,0.6); transform:translateZ(0); animation:bob 6s ease-in-out infinite;}
+@keyframes bob{0%{transform:translateY(0)}50%{transform:translateY(-8px)}100%{transform:translateY(0)}}
+nav a{ color:var(--muted); margin-left:12px; text-decoration:none; font-weight:700 }
+nav a:hover{ color:#fff; transform:translateY(-3px) }
+
+/* hero & grid */
+.hero{ display:grid; gap:18px; margin-top:8px }
+.hero-panel{ background:var(--card); border-radius:12px; padding:22px; display:flex; gap:18px; border:1px solid var(--glass-border); box-shadow:0 12px 40px rgba(3,8,18,0.6); }
+.hero-left{ flex:1 }
+.eyebrow{font-size:12px;color:var(--muted);font-weight:700;padding:6px 10px;border-radius:999px;background:linear-gradient(90deg, rgba(124,77,255,0.08), rgba(0,212,255,0.06));display:inline-block}
+.title{ font-size:28px;font-weight:800;margin:6px 0 8px }
+.lead{ color:var(--muted); margin:0 0 12px; }
+
+.btn{ background:linear-gradient(90deg,var(--accent1),var(--accent2)); color:#021225; padding:10px 14px; border-radius:12px; font-weight:800; text-decoration:none; box-shadow:0 10px 30px rgba(11,99,167,0.12); display:inline-block; position:relative; overflow:hidden; cursor:pointer }
+.btn:hover{ transform:translateY(-6px); box-shadow:0 18px 50px rgba(11,99,167,0.18) }
+
+.hero-right{ width:320px; border-radius:12px; padding:16px; background:linear-gradient(180deg, rgba(11,99,167,0.03), rgba(124,77,255,0.02)); border:1px solid rgba(255,255,255,0.03) }
+
+.main-grid{ display:grid; grid-template-columns:1fr 360px; gap:18px; margin-top:18px; }
+.panel{ background:var(--card); padding:16px; border-radius:12px; border:1px solid var(--glass-border); box-shadow:0 10px 30px rgba(2,6,20,0.6) }
+
+/* services & portfolio */
+.services{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-top:12px; }
+.svc{ padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,0.02); background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.01)); transition: transform .28s var(--ease), box-shadow .28s var(--ease); cursor:default; overflow:hidden }
+.svc:hover{ transform:translateY(-12px); box-shadow:0 18px 40px rgba(2,8,22,0.6) }
+.svc .svg-wrap{ width:48px; height:48px; display:inline-block; vertical-align:middle; margin-right:10px; }
+.svc h3{ display:inline-block; vertical-align:middle; margin:0; font-size:16px }
+.svc p{ color:var(--muted); margin-top:8px; font-size:14px }
+
+.grid-tiles{ display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:12px; margin-top:12px }
+.tile{ height:90px; border-radius:10px; background:linear-gradient(120deg, rgba(255,255,255,0.01), rgba(255,255,255,0.01)); display:flex; align-items:center; justify-content:center; border:1px solid rgba(255,255,255,0.03); cursor:pointer; position:relative; overflow:hidden }
+.tile small{ color:var(--muted) }
+
+/* modal */
+.modal-backdrop{ position:fixed; inset:0; background:rgba(2,6,23,0.7); display:none; align-items:center; justify-content:center; z-index:9999 }
+.modal{ width:90%; max-width:900px; max-height:90%; background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02)); border-radius:12px; padding:16px; border:1px solid var(--glass-border); display:flex; flex-direction:column; gap:10px; transform:translateY(30px) scale(0.98); opacity:0; transition:all .36s var(--ease) }
+.modal.open{ transform:translateY(0) scale(1); opacity:1 }
+.modal .modal-body{ flex:1; display:flex; align-items:center; justify-content:center; overflow:auto }
+
+/* contact & chat */
+.contact-list a{ color:#e6fbff; text-decoration:none; font-weight:700 }
+.form-row{ display:flex; gap:10px; margin-top:10px; flex-wrap:wrap }
+input[type="text"], input[type="email"], textarea, select{ width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); background: rgba(255,255,255,0.02); color:#dfeeff }
+textarea{ min-height:110px; resize:vertical }
+.success-badge{ display:inline-block; padding:8px 12px; background:linear-gradient(90deg,var(--accent3),var(--accent1)); color:#021225; border-radius:999px; font-weight:800; transform:scale(0.96); opacity:0; transition:all .28s var(--ease) }
+
+/* Chat widget */
+#chatWidget{ position:fixed; right:18px; bottom:18px; z-index:9999; font-family:inherit }
+#chatOpen{ background:linear-gradient(90deg,var(--accent1),var(--accent2)); border:none;padding:12px 14px;border-radius:999px;color:#021225;font-weight:800; cursor:pointer }
+#chatBox{ display:none;margin-top:10px;background:rgba(255,255,255,0.03);padding:12px;border-radius:12px;width:340px;border:1px solid rgba(255,255,255,0.04) }
+.chat-messages{ max-height:300px; overflow:auto; display:flex; flex-direction:column; gap:8px; padding:6px }
+.chat-msg{ padding:8px 10px; border-radius:10px; max-width:80%; }
+.chat-msg.user{ align-self:flex-end; background:linear-gradient(90deg,rgba(255,255,255,0.06), rgba(255,255,255,0.03)) }
+.chat-msg.bot{ align-self:flex-start; background:linear-gradient(90deg, rgba(0,212,255,0.06), rgba(124,77,255,0.04)) color:#021225 }
+
+/* responsive */
+@media(max-width:1000px){ .main-grid{ grid-template-columns:1fr } .hero-panel{ flex-direction:column } .hero-right{ width:100% } }
+
+/* accessibility */
+@media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important } }
+</style>
+</head>
+<body>
+
+<!-- GPU Canvas background -->
+<canvas id="bgCanvas" aria-hidden="true"></canvas>
+
+<div class="wrap" role="main">
+  <div class="topbar" role="banner">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">FA</div>
+      <div>
+        <div style="font-weight:800">Faizan Ahmad</div>
+        <div style="font-size:12px; color:var(--muted)">Web • App • AI</div>
+      </div>
+    </div>
+    <nav aria-label="main nav">
+      <a href="#services">Services</a><a href="#portfolio">Portfolio</a><a href="#contact">Contact</a>
+    </nav>
+  </div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-panel">
+      <div class="hero-left">
+        <div class="eyebrow">Full-stack · AI-integrations · Mobile</div>
+        <h2 class="title">Build modern websites, apps, and AI tools that grow your business.</h2>
+        <p class="lead">Design → Build → Deploy. Production-ready web & mobile apps, AI automations, and ongoing support.</p>
+
+        <div style="display:flex;gap:12px;align-items:center">
+          <a class="btn" href="#contact">Request Quote</a>
+          <a class="btn" id="demoDownload" style="background:transparent;border:1px solid rgba(255,255,255,0.06); color:var(--muted)">Download PDF</a>
+          <div style="color:var(--muted); font-size:13px">Or call: <a href="tel:+9173366031846" style="color:#bfefff">+91 73366 031846</a></div>
+        </div>
+
+        <div style="margin-top:12px; color:var(--muted); font-size:13px">
+          Email: <a href="mailto:faijanahmad1201@gmail.com" style="color:#e6fbff">faijanahmad1201@gmail.com</a>
+        </div>
+      </div>
+
+      <aside class="hero-right" aria-hidden="true">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-size:12px;color:var(--muted)">Trusted by</div><div style="font-weight:800;margin-top:6px">Local Businesses & Startups</div></div>
+          <div style="text-align:right"><div style="font-weight:800;font-size:20px">120+</div><div style="color:var(--muted);font-size:13px">Projects</div></div>
+        </div>
+        <div style="height:110px;border-radius:10px;margin-top:12px;background:linear-gradient(120deg, rgba(0,212,255,0.06), rgba(124,77,255,0.04));display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.03)">
+          <svg width="200" height="80" viewBox="0 0 200 80" fill="none" aria-hidden="true"><rect width="200" height="80" rx="8" fill="#021225" opacity="0.06"></rect></svg>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- MAIN GRID -->
+  <div class="main-grid">
+    <div>
+      <section id="services" class="panel">
+        <h3 style="margin:0 0 6px 0">Services</h3>
+        <div style="color:var(--muted); font-size:13px">Project, retainer, or MVP — custom plans available.</div>
+
+        <div class="services">
+          <div class="svc" data-service="web">
+            <span class="svg-wrap" aria-hidden="true">
+              <svg viewBox="0 0 64 64" width="48" height="48"><rect x="6" y="10" width="52" height="30" rx="3" fill="url(#g1)"></rect><defs><linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#00D4FF"/><stop offset="1" stop-color="#7C4DFF"/></linearGradient></defs></svg>
+            </span>
+            <h3>Web Development</h3>
+            <p>Responsive sites, landing pages, e-commerce & CMS.</p>
+          </div>
+
+          <div class="svc" data-service="app">
+            <span class="svg-wrap" aria-hidden="true"><svg viewBox="0 0 64 64" width="48" height="48"><rect x="16" y="8" width="32" height="48" rx="6" fill="url(#g2)"></rect><defs><linearGradient id="g2" x1="0" x2="1"><stop offset="0" stop-color="#00FFA3"/><stop offset="1" stop-color="#00D4FF"/></linearGradient></defs></svg></span>
+            <h3>App Development</h3><p>Cross-platform and native apps, APIs, and deployment.</p>
+          </div>
+
+          <div class="svc" data-service="ai">
+            <span class="svg-wrap" aria-hidden="true"><svg viewBox="0 0 64 64" width="48" height="48"><g transform="translate(12,10)"><circle cx="20" cy="16" r="8" fill="url(#g3)"></circle></g><defs><linearGradient id="g3" x1="0" x2="1"><stop offset="0" stop-color="#7C4DFF"/><stop offset="1" stop-color="#00D4FF"/></linearGradient></defs></svg></span>
+            <h3>AI & Automation</h3><p>Chatbots, workflow automation, data pipelines & model integration.</p>
+          </div>
+
+          <div class="svc" data-service="ux">
+            <span class="svg-wrap" aria-hidden="true"><svg viewBox="0 0 64 64" width="48" height="48"><rect x="6" y="6" width="52" height="52" rx="8" fill="rgba(255,255,255,0.03)"></rect></svg></span>
+            <h3>Design & UX</h3><p>Wireframes, prototypes and UI design.</p>
+          </div>
+        </div>
+
+        <div style="margin-top:12px; display:flex;gap:10px;align-items:center">
+          <a class="btn" href="#contact">Get a Custom Plan</a>
+          <div style="color:var(--muted); font-size:13px">Timelines: landing 1–2w · app MVP 6–12w · AI PoC 2–6w</div>
+        </div>
+      </section>
+
+      <section id="portfolio" class="panel" style="margin-top:14px">
+        <h3 style="margin:0 0 6px 0">Portfolio</h3>
+        <div style="color:var(--muted); font-size:13px">Click a tile to view a screenshot (demo placeholders)</div>
+        <div class="grid-tiles" id="tiles">
+          <div class="tile" data-title="Business Landing" data-img="1"><small>Business Landing</small></div>
+          <div class="tile" data-title="E-commerce Store" data-img="2"><small>E-commerce Store</small></div>
+          <div class="tile" data-title="Food Delivery App" data-img="3"><small>Food Delivery App</small></div>
+          <div class="tile" data-title="AI Chatbot" data-img="4"><small>AI Chatbot</small></div>
+        </div>
+      </section>
+
+      <section class="panel" style="margin-top:14px">
+        <h3 style="margin:0 0 6px 0">How I work</h3>
+        <ol style="color:var(--muted); font-size:13px; margin-top:8px">
+          <li>Discovery → quote</li><li>Design & prototype</li><li>Development & testing</li><li>Launch, docs & support</li>
+        </ol>
+      </section>
+    </div>
+
+    <!-- Contact / Right column -->
+    <aside>
+      <section id="contact" class="panel contact-card">
+        <h3 style="margin:0 0 6px 0">Contact & Request Quote</h3>
+        <div style="color:var(--muted);font-size:13px">Quick response — usually within 24–48 hours</div>
+
+        <div class="contact-list" style="margin-top:12px">
+          <p>Email</p><a href="mailto:faijanahmad1201@gmail.com">faijanahmad1201@gmail.com</a>
+          <p style="margin-top:8px">Phone</p><a href="tel:+9173366031846">+91 73366 031846</a>
+        </div>
+
+        <form id="contactForm" onsubmit="return submitContact(event)" style="margin-top:12px">
+          <div class="form-row"><input id="name" name="name" type="text" placeholder="Full name" required /></div>
+          <div class="form-row"><input id="email" name="email" type="email" placeholder="Email" required /></div>
+          <div class="form-row"><select id="service" name="service" aria-label="Service"><option value="">Interested in…</option><option>Website</option><option>Mobile App</option><option>AI / Automation</option><option>Design</option><option>Other</option></select></div>
+          <div class="form-row"><textarea id="message" name="message" placeholder="Briefly describe your project..." required></textarea></div>
+
+          <div style="display:flex; gap:8px; align-items:center; margin-top:12px">
+            <button type="submit" class="btn">Send message</button>
+            <div id="successBadge" class="success-badge" aria-live="polite">Message sent ✓</div>
+          </div>
+
+          <div style="margin-top:8px; font-size:12px; color:var(--muted)">To accept messages directly without opening an email app, set your Formspree endpoint in this file (see instructions).</div>
+        </form>
+
+        <div style="margin-top:12px" class="panel">
+          <h4 style="margin:0 0 6px 0">Packages</h4>
+          <div style="color:var(--muted);font-size:13px">Starter site · Business app · AI PoC — custom quotes after discovery.</div>
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  <footer>&copy; <span id="year"></span> Faizan Ahmad — Web • App • AI · <a href="mailto:faijanahmad1201@gmail.com" style="color:#bfefff">faijanahmad1201@gmail.com</a></footer>
+</div>
+
+<!-- Modal -->
+<div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div id="modalTitle" style="font-weight:800"></div>
+      <button class="close-btn" id="modalClose">Close</button>
+    </div>
+    <div class="modal-body" id="modalBody" aria-live="polite"></div>
+    <div class="modal-footer"><div style="color:var(--muted); font-size:13px">Demo screenshots — replace with your images/links</div><div><button class="close-btn" id="modalClose2">Close</button></div></div>
+  </div>
+</div>
+
+<!-- CHAT WIDGET -->
+<div id="chatWidget" aria-live="polite">
+  <button id="chatOpen">Chat</button>
+  <div id="chatBox" role="region" aria-label="Chat with Faizan">
+    <div style="font-weight:800; margin-bottom:8px">Chat with Faizan</div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <input id="chatName" placeholder="Your name" style="width:100%;padding:8px;border-radius:8px;margin-bottom:8px" />
+    <input id="chatEmail" placeholder="Email" style="width:100%;padding:8px;border-radius:8px;margin-bottom:8px" />
+    <textarea id="chatMsg" placeholder="Ask about website, app or AI..." style="width:100%;padding:8px;border-radius:8px;margin-bottom:8px"></textarea>
+    <div style="display:flex; gap:8px;">
+      <button id="chatSend" class="btn">Send</button>
+      <button id="chatAI" class="btn" style="background:linear-gradient(90deg,var(--accent3),var(--accent1))">Ask AI</button>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-top:8px">Tip: "Ask AI" uses an AI assistant (demo or real if configured).</div>
+  </div>
+</div>
+
+<script>
+/* ========== CONFIG ========== */
+// configure these:
+// FORM_ENDPOINT - Formspree, leave '' to use local simulated contact
+// AI_ENDPOINT - your serverless function URL that forwards to OpenAI (leave '' to use demo local AI)
+const FORM_ENDPOINT = '';   // e.g. 'https://formspree.io/f/xyzabc'
+const AI_ENDPOINT = '';     // e.g. 'https://yourdomain.com/.netlify/functions/openai'
+
+/* ========== PARTICLE CANVAS (GPU friendly) ========== */
+(function canvasParticles(){
+  const canvas = document.getElementById('bgCanvas'); if(!canvas) return;
+  const ctx = canvas.getContext('2d', { alpha:true });
+  let DPR = Math.max(1, devicePixelRatio || 1);
+  function resize(){ canvas.width = innerWidth*DPR; canvas.height = innerHeight*DPR; canvas.style.width = innerWidth+'px'; canvas.style.height = innerHeight+'px'; ctx.setTransform(DPR,0,0,DPR,0,0); }
+  addEventListener('resize', resize); resize();
+
+  const count = Math.max(24, Math.min(160, parseInt(getComputedStyle(document.documentElement).getPropertyValue('--particle-count')) || 60));
+  const particles = Array.from({length:count}, ()=>({
+    x: Math.random()*innerWidth,
+    y: innerHeight + Math.random()*200,
+    vx: (Math.random()-0.5)*0.4,
+    vy: - (0.6 + Math.random()*1.6),
+    s: 1 + Math.random()*6,
+    a: 0.04 + Math.random()*0.14
+  }));
+  let last = performance.now();
+  function frame(t){
+    const dt = Math.min(40, t-last); last = t;
+    ctx.clearRect(0,0,innerWidth, innerHeight);
+    ctx.fillStyle = 'rgba(2,6,23,0.2)'; ctx.fillRect(0,0,innerWidth, innerHeight);
+    for(const p of particles){
+      p.x += p.vx * (dt*0.06); p.y += p.vy * (dt*0.06); p.a -= 0.00008 * dt;
+      if(p.y < -60 || p.a <= 0){ p.x = Math.random()*innerWidth; p.y = innerHeight + Math.random()*200; p.vx=(Math.random()-0.5)*0.4; p.vy=-(0.6 + Math.random()*1.6); p.s=1 + Math.random()*6; p.a=0.04 + Math.random()*0.14; }
+      const g = ctx.createLinearGradient(p.x, p.y - p.s, p.x + p.s*2, p.y + p.s*2);
+      g.addColorStop(0, 'rgba(0,212,255,'+p.a+')'); g.addColorStop(1, 'rgba(124,77,255,'+(p.a*0.55)+')');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(p.x, p.y, p.s*1.2, p.s, 0, 0, Math.PI*2); ctx.fill();
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+
+/* ========== UI: modal, tiles, year ========== */
+document.getElementById('year').textContent = new Date().getFullYear();
+(function portfolioModal(){
+  const tiles = document.querySelectorAll('.tile'); const backdrop = document.getElementById('modalBackdrop'); const modal = backdrop.querySelector('.modal'); const title = document.getElementById('modalTitle'); const body = document.getElementById('modalBody'); const close = document.getElementById('modalClose'); const close2 = document.getElementById('modalClose2');
+  function openModal(name, id){
+    title.textContent = name;
+    body.innerHTML = generateDemoSVG(name, id);
+    backdrop.style.display = 'flex'; setTimeout(()=> modal.classList.add('open'),20); backdrop.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden';
+  }
+  function closeModal(){ modal.classList.remove('open'); backdrop.setAttribute('aria-hidden','true'); setTimeout(()=>{ backdrop.style.display='none'; body.innerHTML=''; document.body.style.overflow=''; },340); }
+  tiles.forEach(t=> t.addEventListener('click', ()=> openModal(t.dataset.title || 'Preview', t.dataset.img)));
+  [close, close2, backdrop].forEach(el=> el && el.addEventListener('click', (e)=> { if(e.target === backdrop || e.target === close || e.target === close2) closeModal(); }));
+  function generateDemoSVG(name,id){
+    return `<svg width="100%" height="360" viewBox="0 0 1200 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${name} screenshot"><defs><linearGradient id="mg${id}" x1="0" x2="1"><stop offset="0" stop-color="#00D4FF"/><stop offset="1" stop-color="#7C4DFF"/></linearGradient></defs><rect width="1200" height="600" rx="12" fill="#021225"/><rect x="40" y="30" width="1120" height="120" rx="8" fill="url(#mg${id})" opacity="0.14"></rect><text x="60" y="110" fill="#e6fbff" font-size="36" font-weight="700">${name}</text></svg>`; }
+})();
+
+/* ========== Contact form (Formspree integration or simulated) ========== */
+async function submitContact(e){
+  e.preventDefault();
+  const name = document.getElementById('name').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const service = document.getElementById('service').value.trim();
+  const message = document.getElementById('message').value.trim();
+  if(!name||!email||!message){ alert('Please fill name, email and message.'); return false; }
+  const successBadge = document.getElementById('successBadge');
+
+  if(FORM_ENDPOINT && FORM_ENDPOINT.startsWith('https')){
+    try{
+      const fd = new FormData(); fd.append('name',name); fd.append('email',email); fd.append('service',service); fd.append('message',message); fd.append('_subject', `Website Inquiry: ${service || 'General'} — ${name}`);
+      const res = await fetch(FORM_ENDPOINT, { method:'POST', body: fd, headers: { 'Accept': 'application/json' }});
+      if(res.ok){ showSuccess(successBadge); e.target.reset(); } else { alert('Submission failed. Please try later or email directly.'); }
+    } catch(err){ alert('Network error. Try again later.'); console.error(err); }
+  } else {
+    // simulate: save locally & show success
+    const mock = { name,email,service,message,received:new Date().toISOString() };
+    const saves = JSON.parse(localStorage.getItem('mockMessages')||'[]'); saves.unshift(mock); localStorage.setItem('mockMessages', JSON.stringify(saves.slice(0,20)));
+    showSuccess(successBadge); e.target.reset();
+    setTimeout(()=> alert('Form saved locally (demo). To receive by email, set FORM_ENDPOINT to your Formspree URL.'),700);
+  }
+  return false;
+}
+function showSuccess(b){ b.style.opacity=1; b.style.transform='scale(1)'; setTimeout(()=>{ b.style.opacity=0; b.style.transform='scale(0.96)'; },2400); }
+
+/* ========== CHAT WIDGET ========== */
+const chatOpen = document.getElementById('chatOpen'); const chatBox = document.getElementById('chatBox'); const chatSend = document.getElementById('chatSend'); const chatAI = document.getElementById('chatAI'); const chatMessages = document.getElementById('chatMessages');
+chatOpen.addEventListener('click', ()=> { chatBox.style.display = chatBox.style.display==='none' ? 'block' : 'none'; });
+function appendMsg(text, who='bot'){ const el = document.createElement('div'); el.className = 'chat-msg '+(who==='user'?'user':'bot'); el.textContent = text; chatMessages.appendChild(el); chatMessages.scrollTop = chatMessages.scrollHeight; }
+
+// Demo/simple local AI (fallback) - small heuristics
+function localAIBot(prompt){
+  prompt = prompt.toLowerCase();
+  if(prompt.includes('price')||prompt.includes('cost')||prompt.includes('charge')) return "I offer flexible pricing — small landing pages start from ₹X, app MVPs depend on scope. Want a quick quote? Share details.";
+  if(prompt.includes('how long')||prompt.includes('timeline')||prompt.includes('time')) return "Typical timelines: landing page 1–2 weeks, app MVP 6–12 weeks, AI PoC 2–6 weeks.";
+  if(prompt.includes('chatbot')||prompt.includes('ai')) return "I can build chatbots for FAQs, lead capture, and automation — they connect to your knowledge base or use a small model for responses.";
+  if(prompt.includes('contact')||prompt.includes('call')||prompt.includes('email')) return "You can email me at faijanahmad1201@gmail.com or call +91 73366 031846. I typically respond within 24–48 hours.";
+  // fallback
+  return "Thanks — I got your question. Could you share a few more details (budget, timeline, platform)? Or press 'Ask AI' to get a quick AI-generated suggestion.";
+}
+
+// Send normal message (to you)
+chatSend.addEventListener('click', ()=>{
+  const n = document.getElementById('chatName').value.trim();
+  const em = document.getElementById('chatEmail').value.trim();
+  const msg = document.getElementById('chatMsg').value.trim();
+  if(!n||!em||!msg){ alert('Please fill name, email and message in chat.'); return; }
+  appendMsg(`${n}: ${msg}`, 'user');
+  // optional: send to Formspree or local storage
+  if(FORM_ENDPOINT){ const fd = new FormData(); fd.append('name',n); fd.append('email',em); fd.append('service','Chat Message'); fd.append('message',msg); fetch(FORM_ENDPOINT,{method:'POST',body:fd}); }
+  else { const saves = JSON.parse(localStorage.getItem('mockMessages')||'[]'); saves.unshift({name:n,email:em,message:msg,ts:new Date().toISOString()}); localStorage.setItem('mockMessages', JSON.stringify(saves.slice(0,20))); }
+  appendMsg('Thanks! I received your message and will reply soon.', 'bot');
+  document.getElementById('chatMsg').value = '';
+});
+
+// Ask AI button - calls AI_ENDPOINT (server) or uses local fallback
+chatAI.addEventListener('click', async ()=>{
+  const name = document.getElementById('chatName').value.trim() || 'Guest';
+  const email = document.getElementById('chatEmail').value.trim() || '';
+  const prompt = document.getElementById('chatMsg').value.trim();
+  if(!prompt){ alert('Please write a question for AI.'); return; }
+  appendMsg(prompt, 'user');
+  appendMsg('Thinking…', 'bot');
+  // if AI_ENDPOINT is configured, call server; otherwise use localAIBot
+  if(AI_ENDPOINT && AI_ENDPOINT.startsWith('https')){
+    try{
+      const res = await fetch(AI_ENDPOINT, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ name, email, prompt }) });
+      const data = await res.json();
+      // server should return { reply: "..." }
+      const reply = (data && (data.reply || data.output || data.result)) || 'No answer (server returned empty).';
+      // remove last "Thinking…" message
+      const last = chatMessages.lastChild; if(last && last.textContent==='Thinking…') last.remove();
+      appendMsg(reply, 'bot');
+    } catch(err){
+      console.error(err);
+      const last = chatMessages.lastChild; if(last && last.textContent==='Thinking…') last.remove();
+      appendMsg('Sorry — AI server error. Try again later or use demo mode.', 'bot');
+    }
+  } else {
+    // local simulated AI
+    const last = chatMessages.lastChild; if(last && last.textContent==='Thinking…') last.remove();
+    const reply = localAIBot(prompt);
+    appendMsg(reply, 'bot');
+  }
+});
+
+/* ========== Accessibility / small UX ========== */
+if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+  document.documentElement.style.setProperty('--particle-count', '0');
+}
+
+/* ========== Demo PDF download (simple) ========== */
+document.getElementById('demoDownload').addEventListener('click', ()=>{
+  const html = `<html><body style="font-family:Arial;padding:28px;color:#021225"><h1>Faizan Ahmad — Web • App • AI</h1><p>Email: faijanahmad1201@gmail.com · Phone: +91 73366 031846</p><h3>Services</h3><ul><li>Website design & development</li><li>Mobile apps</li><li>AI & automation</li></ul></body></html>`;
+  const w = window.open('about:blank','_blank'); w.document.write(html); w.document.close();
+});
+</script>
+</body>
+</html>
